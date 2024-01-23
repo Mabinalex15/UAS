@@ -1,0 +1,50 @@
+# Impor library 
+import cx_Oracle
+import tkinter as tk
+
+# Koneksi ke database 
+conn = cx_Oracle.connect('user/password@localhost')
+
+# Fungsi baca sensor 
+def read_sensor(sensor_id):
+  cur = conn.cursor()
+  cur.execute('SELECT value FROM sensors WHERE id=:id', id=sensor_id)
+  return cur.fetchone()[0]
+
+# Fungsi kontrol katup 
+def control_valve(valve_id, value):
+  cur = conn.cursor()
+  cur.execute('UPDATE valves SET state=:state WHERE id=:id', 
+              state=value, id=valve_id)
+  conn.commit()
+  
+# GUI sederhana 
+root = tk.Tk()
+tk.Label(root, text="Suhu Reaktor: ").grid(row=0, column=0)
+temp_value = tk.Label(root, text="")
+temp_value.grid(row=0, column=1)
+
+tk.Label(root, text="Katup Input Udara: ").grid(row=1, column=0)
+air_value = tk.Label(root, text="") 
+air_value.grid(row=1, column=1)
+
+# Loop program 
+while True:
+
+  # Baca sensor suhu
+  temp = read_sensor(1) 
+  temp_value.config(text=str(temp) + " C")
+
+  # Baca status katup udara
+  air_valve = read_sensor(2)
+  air_value.config(text=str(air_valve))
+
+  # Kontrol katup berdasarkan suhu
+  if temp > 500:
+    control_valve(1, 'BUKA')
+  else:
+    control_valve(1, 'TUTUP')
+    
+  root.update()
+  
+root.mainloop()
